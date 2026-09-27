@@ -36,6 +36,25 @@
             <h2 class="h5 mb-0">Países</h2>
             <button class="btn btn-primary" type="button" onclick="abrirModalPais()">Nuevo país</button>
           </div>
+
+          <div class="card-body border-bottom d-none" id="contenedor_form_pais">
+            <form id="form_pais">
+              <fieldset id="campos_form_pais" disabled>
+                <input type="hidden" id="pais_id">
+                <div class="row g-3 align-items-end">
+                  <div class="col-12 col-md-8">
+                    <label class="form-label" for="pais_nombre">Nombre</label>
+                    <input class="form-control" id="pais_nombre" maxlength="100" required>
+                  </div>
+                  <div class="col-12 col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelarFormularioPais()">Cancelar</button>
+                  </div>
+                </div>
+              </fieldset>
+            </form>
+          </div>
+
           <div class="card-body p-0">
             <div class="table-responsive">
               <table class="table table-hover align-middle mb-0">
@@ -59,6 +78,29 @@
             <h2 class="h5 mb-0">Departamentos</h2>
             <button class="btn btn-primary" type="button" onclick="abrirModalDepartamento()">Nuevo departamento</button>
           </div>
+
+          <div class="card-body border-bottom d-none" id="contenedor_form_departamento">
+            <form id="form_departamento">
+              <fieldset id="campos_form_departamento" disabled>
+                <input type="hidden" id="departamento_id">
+                <div class="row g-3 align-items-end">
+                  <div class="col-12 col-md-4">
+                    <label class="form-label" for="departamento_pais_id">País</label>
+                    <select class="form-select" id="departamento_pais_id" required></select>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label" for="departamento_nombre">Nombre</label>
+                    <input class="form-control" id="departamento_nombre" maxlength="100" required>
+                  </div>
+                  <div class="col-12 col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelarFormularioDepartamento()">Cancelar</button>
+                  </div>
+                </div>
+              </fieldset>
+            </form>
+          </div>
+
           <div class="card-body p-0">
             <div class="table-responsive">
               <table class="table table-hover align-middle mb-0">
@@ -83,6 +125,33 @@
             <h2 class="h5 mb-0">Ciudades</h2>
             <button class="btn btn-primary" type="button" onclick="abrirModalCiudad()">Nueva ciudad</button>
           </div>
+
+          <div class="card-body border-bottom d-none" id="contenedor_form_ciudad">
+            <form id="form_ciudad">
+              <fieldset id="campos_form_ciudad" disabled>
+                <input type="hidden" id="ciudad_id">
+                <div class="row g-3 align-items-end">
+                  <div class="col-12 col-md-3">
+                    <label class="form-label" for="ciudad_pais_id">País</label>
+                    <select class="form-select" id="ciudad_pais_id" required></select>
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <label class="form-label" for="ciudad_departamento_id">Departamento</label>
+                    <select class="form-select" id="ciudad_departamento_id" required></select>
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <label class="form-label" for="ciudad_nombre">Nombre</label>
+                    <input class="form-control" id="ciudad_nombre" maxlength="100" required>
+                  </div>
+                  <div class="col-12 col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelarFormularioCiudad()">Cancelar</button>
+                  </div>
+                </div>
+              </fieldset>
+            </form>
+          </div>
+
           <div class="card-body p-0">
             <div class="table-responsive">
               <table class="table table-hover align-middle mb-0">
@@ -103,82 +172,6 @@
       </section>
     </div>
   </main>
-
-  <div class="modal fade" id="modalPais" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <form class="modal-content" id="form_pais">
-        <div class="modal-header">
-          <h2 class="modal-title fs-5" id="titulo_modal_pais">Nuevo país</h2>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="pais_id">
-          <label class="form-label" for="pais_nombre">Nombre</label>
-          <input class="form-control" id="pais_nombre" maxlength="100" required>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Guardar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal fade" id="modalDepartamento" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <form class="modal-content" id="form_departamento">
-        <div class="modal-header">
-          <h2 class="modal-title fs-5" id="titulo_modal_departamento">Nuevo departamento</h2>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="departamento_id">
-          <div class="mb-3">
-            <label class="form-label" for="departamento_pais_id">País</label>
-            <select class="form-select" id="departamento_pais_id" required></select>
-          </div>
-          <div>
-            <label class="form-label" for="departamento_nombre">Nombre</label>
-            <input class="form-control" id="departamento_nombre" maxlength="100" required>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Guardar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal fade" id="modalCiudad" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <form class="modal-content" id="form_ciudad">
-        <div class="modal-header">
-          <h2 class="modal-title fs-5" id="titulo_modal_ciudad">Nueva ciudad</h2>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="ciudad_id">
-          <div class="mb-3">
-            <label class="form-label" for="ciudad_pais_id">País</label>
-            <select class="form-select" id="ciudad_pais_id" required></select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label" for="ciudad_departamento_id">Departamento</label>
-            <select class="form-select" id="ciudad_departamento_id" required></select>
-          </div>
-          <div>
-            <label class="form-label" for="ciudad_nombre">Nombre</label>
-            <input class="form-control" id="ciudad_nombre" maxlength="100" required>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Guardar</button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>

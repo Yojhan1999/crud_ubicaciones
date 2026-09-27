@@ -33,3 +33,8 @@ CRUD desarrollado con PHP puro, PDO, MySQL/MariaDB, Bootstrap 5, jQuery y AJAX.
 - Una ciudad pertenece a un departamento.
 - No se puede eliminar un país con departamentos relacionados.
 - No se puede eliminar un departamento con ciudades relacionadas.
+
+
+## Formularios sin modales
+
+Los formularios de País, Departamento y Ciudad se muestran dentro de cada pestaña al presionar Nuevo o Editar. Permanecen ocultos y deshabilitados cuando no están en uso.

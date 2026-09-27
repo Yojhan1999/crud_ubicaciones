@@ -1,7 +1,3 @@
-const modalPais = new bootstrap.Modal(document.getElementById('modalPais'));
-const modalDepartamento = new bootstrap.Modal(document.getElementById('modalDepartamento'));
-const modalCiudad = new bootstrap.Modal(document.getElementById('modalCiudad'));
-
 $(async function () {
   await cargarTodo();
 
@@ -48,6 +44,16 @@ function escaparHtml(valor) {
   return $('<div>').text(valor ?? '').html();
 }
 
+function habilitarFormulario(contenedor, campos) {
+  $(contenedor).removeClass('d-none');
+  $(campos).prop('disabled', false);
+}
+
+function deshabilitarFormulario(contenedor, campos) {
+  $(campos).prop('disabled', true);
+  $(contenedor).addClass('d-none');
+}
+
 async function listarPaises() {
   const respuesta = await peticionAjax('index.php?modulo=pais&accion=listar');
   const filas = respuesta.datos.map((pais) => `
@@ -79,16 +85,22 @@ async function cargarPaisesCombo(selector, seleccionado = null) {
 function abrirModalPais() {
   $('#pais_id').val('');
   $('#pais_nombre').val('');
-  $('#titulo_modal_pais').text('Nuevo país');
-  modalPais.show();
+  habilitarFormulario('#contenedor_form_pais', '#campos_form_pais');
+  $('#pais_nombre').trigger('focus');
+}
+
+function cancelarFormularioPais() {
+  $('#form_pais')[0].reset();
+  $('#pais_id').val('');
+  deshabilitarFormulario('#contenedor_form_pais', '#campos_form_pais');
 }
 
 async function editarPais(pais_id) {
   const respuesta = await peticionAjax(`index.php?modulo=pais&accion=obtener&pais_id=${pais_id}`);
   $('#pais_id').val(respuesta.datos.pais_id);
   $('#pais_nombre').val(respuesta.datos.nombre);
-  $('#titulo_modal_pais').text('Editar país');
-  modalPais.show();
+  habilitarFormulario('#contenedor_form_pais', '#campos_form_pais');
+  $('#pais_nombre').trigger('focus');
 }
 
 async function guardarPais(evento) {
@@ -106,7 +118,7 @@ async function guardarPais(evento) {
 
   try {
     const respuesta = await peticionAjax(`index.php?modulo=pais&accion=${accion}`, 'POST', datos);
-    modalPais.hide();
+    cancelarFormularioPais();
     mostrarAlerta(respuesta.mensaje);
     await cargarTodo();
   } catch (xhr) {
@@ -167,18 +179,25 @@ async function cargarDepartamentosCombo(pais_id, seleccionado = null) {
 async function abrirModalDepartamento() {
   $('#departamento_id').val('');
   $('#departamento_nombre').val('');
-  $('#titulo_modal_departamento').text('Nuevo departamento');
   await cargarPaisesCombo('#departamento_pais_id');
-  modalDepartamento.show();
+  habilitarFormulario('#contenedor_form_departamento', '#campos_form_departamento');
+  $('#departamento_pais_id').trigger('focus');
+}
+
+function cancelarFormularioDepartamento() {
+  $('#form_departamento')[0].reset();
+  $('#departamento_id').val('');
+  $('#departamento_pais_id').html('');
+  deshabilitarFormulario('#contenedor_form_departamento', '#campos_form_departamento');
 }
 
 async function editarDepartamento(departamento_id) {
   const respuesta = await peticionAjax(`index.php?modulo=departamento&accion=obtener&departamento_id=${departamento_id}`);
   $('#departamento_id').val(respuesta.datos.departamento_id);
   $('#departamento_nombre').val(respuesta.datos.nombre);
-  $('#titulo_modal_departamento').text('Editar departamento');
   await cargarPaisesCombo('#departamento_pais_id', respuesta.datos.pais_id);
-  modalDepartamento.show();
+  habilitarFormulario('#contenedor_form_departamento', '#campos_form_departamento');
+  $('#departamento_pais_id').trigger('focus');
 }
 
 async function guardarDepartamento(evento) {
@@ -197,7 +216,7 @@ async function guardarDepartamento(evento) {
 
   try {
     const respuesta = await peticionAjax(`index.php?modulo=departamento&accion=${accion}`, 'POST', datos);
-    modalDepartamento.hide();
+    cancelarFormularioDepartamento();
     mostrarAlerta(respuesta.mensaje);
     await cargarTodo();
   } catch (xhr) {
@@ -240,20 +259,28 @@ async function listarCiudades() {
 async function abrirModalCiudad() {
   $('#ciudad_id').val('');
   $('#ciudad_nombre').val('');
-  $('#titulo_modal_ciudad').text('Nueva ciudad');
   await cargarPaisesCombo('#ciudad_pais_id');
   $('#ciudad_departamento_id').html('<option value="">Seleccione primero un país...</option>');
-  modalCiudad.show();
+  habilitarFormulario('#contenedor_form_ciudad', '#campos_form_ciudad');
+  $('#ciudad_pais_id').trigger('focus');
+}
+
+function cancelarFormularioCiudad() {
+  $('#form_ciudad')[0].reset();
+  $('#ciudad_id').val('');
+  $('#ciudad_pais_id').html('');
+  $('#ciudad_departamento_id').html('');
+  deshabilitarFormulario('#contenedor_form_ciudad', '#campos_form_ciudad');
 }
 
 async function editarCiudad(ciudad_id) {
   const respuesta = await peticionAjax(`index.php?modulo=ciudad&accion=obtener&ciudad_id=${ciudad_id}`);
   $('#ciudad_id').val(respuesta.datos.ciudad_id);
   $('#ciudad_nombre').val(respuesta.datos.nombre);
-  $('#titulo_modal_ciudad').text('Editar ciudad');
   await cargarPaisesCombo('#ciudad_pais_id', respuesta.datos.pais_id);
   await cargarDepartamentosCombo(respuesta.datos.pais_id, respuesta.datos.departamento_id);
-  modalCiudad.show();
+  habilitarFormulario('#contenedor_form_ciudad', '#campos_form_ciudad');
+  $('#ciudad_pais_id').trigger('focus');
 }
 
 async function guardarCiudad(evento) {
@@ -272,7 +299,7 @@ async function guardarCiudad(evento) {
 
   try {
     const respuesta = await peticionAjax(`index.php?modulo=ciudad&accion=${accion}`, 'POST', datos);
-    modalCiudad.hide();
+    cancelarFormularioCiudad();
     mostrarAlerta(respuesta.mensaje);
     await cargarTodo();
   } catch (xhr) {
