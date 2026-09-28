@@ -1,13 +1,14 @@
-$(async function () {
+document.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('form_pais').addEventListener('submit', guardarPais);
+  document.getElementById('form_departamento').addEventListener('submit', guardarDepartamento);
+  document.getElementById('form_ciudad').addEventListener('submit', guardarCiudad);
+
+  document.getElementById('ciudad_pais_id').addEventListener('change', async function () {
+    await cargarDepartamentosCombo(Number(this.value), null);
+  });
+
   await cargarTodo();
   mostrarSeccion('pais');
-
-  $('#form_pais').on('submit', guardarPais);
-  $('#form_departamento').on('submit', guardarDepartamento);
-  $('#form_ciudad').on('submit', guardarCiudad);
-  $('#ciudad_pais_id').on('change', async function () {
-    await cargarDepartamentosCombo(Number($(this).val()), null);
-  });
 });
 
 async function cargarTodo() {
@@ -18,52 +19,75 @@ async function cargarTodo() {
   ]);
 }
 
-function peticionAjax(url, metodo = 'GET', datos = null) {
-  return $.ajax({
-    url,
+async function peticionAjax(url, metodo = 'GET', datos = null) {
+  const opciones = {
     method: metodo,
-    contentType: 'application/json; charset=utf-8',
-    dataType: 'json',
-    data: datos !== null ? JSON.stringify(datos) : undefined
-  });
+    headers: {
+      'Accept': 'application/json'
+    }
+  };
+
+  if (datos !== null) {
+    opciones.headers['Content-Type'] = 'application/json; charset=utf-8';
+    opciones.body = JSON.stringify(datos);
+  }
+
+  const peticion = await fetch(url, opciones);
+  const respuesta = await peticion.json();
+
+  if (!peticion.ok) {
+    throw new Error(respuesta.mensaje || 'Ocurrió un error al procesar la solicitud.');
+  }
+
+  return respuesta;
 }
 
 function mostrarAlerta(mensaje, tipo = 'success') {
-  $('#alerta').html(`
+  document.getElementById('alerta').innerHTML = `
     <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
       ${escaparHtml(mensaje)}
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-  `);
+  `;
 }
 
-function mensajeError(xhr) {
-  return xhr.responseJSON?.mensaje || 'Ocurrió un error al procesar la solicitud.';
+function mensajeError(error) {
+  return error.message || 'Ocurrió un error al procesar la solicitud.';
 }
 
 function escaparHtml(valor) {
-  return $('<div>').text(valor ?? '').html();
+  const elemento = document.createElement('div');
+  elemento.textContent = valor ?? '';
+  return elemento.innerHTML;
 }
 
 function mostrarSeccion(modulo) {
-  $('.modulo-seccion').removeClass('activa');
-  $(`#seccion_${modulo}`).addClass('activa');
+  document.querySelectorAll('.modulo-seccion').forEach((seccion) => {
+    seccion.classList.remove('activa');
+  });
+
+  document.getElementById(`seccion_${modulo}`).classList.add('activa');
 }
 
 async function listarPaises() {
-  const respuesta = await peticionAjax('index.php?modulo=pais&accion=listar');
-  const filas = respuesta.datos.map((pais) => `
-    <tr>
-      <td>${pais.pais_id}</td>
-      <td>${escaparHtml(pais.nombre)}</td>
-      <td class="text-end">
-        <button class="btn btn-sm btn-outline-primary" onclick="editarPais(${pais.pais_id})">Editar</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="eliminarPais(${pais.pais_id})">Eliminar</button>
-      </td>
-    </tr>
-  `).join('');
+  try {
+    const respuesta = await peticionAjax('index.php?modulo=pais&accion=listar');
+    const filas = respuesta.datos.map((pais) => `
+      <tr>
+        <td>${pais.pais_id}</td>
+        <td>${escaparHtml(pais.nombre)}</td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-outline-primary" onclick="editarPais(${pais.pais_id})">Editar</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="eliminarPais(${pais.pais_id})">Eliminar</button>
+        </td>
+      </tr>
+    `).join('');
 
-  $('#tabla_paises').html(filas || '<tr><td colspan="3" class="text-center text-secondary py-4">Sin registros.</td></tr>');
+    document.getElementById('tabla_paises').innerHTML = filas
+      || '<tr><td colspan="3" class="text-center text-secondary py-4">Sin registros.</td></tr>';
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
+  }
 }
 
 async function cargarPaisesCombo(selector, seleccionado = null) {
@@ -75,38 +99,44 @@ async function cargarPaisesCombo(selector, seleccionado = null) {
     opciones += `<option value="${pais.pais_id}" ${selected}>${escaparHtml(pais.nombre)}</option>`;
   });
 
-  $(selector).html(opciones);
+  document.querySelector(selector).innerHTML = opciones;
 }
 
 function abrirModalPais() {
   mostrarSeccion('pais');
-  $('#titulo_pais').text('Crear País');
-  $('#pais_id').val('');
-  $('#pais_nombre').val('');
-  $('#pais_nombre').trigger('focus');
+  document.getElementById('titulo_pais').textContent = 'Crear País';
+  document.getElementById('pais_id').value = '';
+  document.getElementById('pais_nombre').value = '';
+  document.getElementById('pais_nombre').focus();
 }
 
 function cancelarFormularioPais() {
-  $('#form_pais')[0].reset();
-  $('#pais_id').val('');
-  $('#titulo_pais').text('Crear País');
+  document.getElementById('form_pais').reset();
+  document.getElementById('pais_id').value = '';
+  document.getElementById('titulo_pais').textContent = 'Crear País';
   mostrarSeccion('pais');
 }
 
 async function editarPais(pais_id) {
-  const respuesta = await peticionAjax(`index.php?modulo=pais&accion=obtener&pais_id=${pais_id}`);
-  mostrarSeccion('pais');
-  $('#titulo_pais').text('Editar País');
-  $('#pais_id').val(respuesta.datos.pais_id);
-  $('#pais_nombre').val(respuesta.datos.nombre);
-  $('#pais_nombre').trigger('focus');
+  try {
+    const respuesta = await peticionAjax(`index.php?modulo=pais&accion=obtener&pais_id=${pais_id}`);
+
+    mostrarSeccion('pais');
+    document.getElementById('titulo_pais').textContent = 'Editar País';
+    document.getElementById('pais_id').value = respuesta.datos.pais_id;
+    document.getElementById('pais_nombre').value = respuesta.datos.nombre;
+    document.getElementById('pais_nombre').focus();
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
+  }
 }
 
 async function guardarPais(evento) {
   evento.preventDefault();
-  const pais_id = Number($('#pais_id').val());
+
+  const pais_id = Number(document.getElementById('pais_id').value);
   const datos = {
-    nombre: $('#pais_nombre').val().trim()
+    nombre: document.getElementById('pais_nombre').value.trim()
   };
   let accion = 'guardar';
 
@@ -116,12 +146,17 @@ async function guardarPais(evento) {
   }
 
   try {
-    const respuesta = await peticionAjax(`index.php?modulo=pais&accion=${accion}`, 'POST', datos);
+    const respuesta = await peticionAjax(
+      `index.php?modulo=pais&accion=${accion}`,
+      'POST',
+      datos
+    );
+
     cancelarFormularioPais();
     mostrarAlerta(respuesta.mensaje);
     await cargarTodo();
-  } catch (xhr) {
-    mostrarAlerta(mensajeError(xhr), 'danger');
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
   }
 }
 
@@ -131,83 +166,116 @@ async function eliminarPais(pais_id) {
   }
 
   try {
-    const respuesta = await peticionAjax('index.php?modulo=pais&accion=eliminar', 'POST', {pais_id});
+    const respuesta = await peticionAjax(
+      'index.php?modulo=pais&accion=eliminar',
+      'POST',
+      {pais_id}
+    );
+
     mostrarAlerta(respuesta.mensaje);
     await cargarTodo();
-  } catch (xhr) {
-    mostrarAlerta(mensajeError(xhr), 'danger');
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
   }
 }
 
 async function listarDepartamentos() {
-  const respuesta = await peticionAjax('index.php?modulo=departamento&accion=listar');
-  const filas = respuesta.datos.map((departamento) => `
-    <tr>
-      <td>${departamento.departamento_id}</td>
-      <td>${escaparHtml(departamento.pais)}</td>
-      <td>${escaparHtml(departamento.nombre)}</td>
-      <td class="text-end">
-        <button class="btn btn-sm btn-outline-primary" onclick="editarDepartamento(${departamento.departamento_id})">Editar</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="eliminarDepartamento(${departamento.departamento_id})">Eliminar</button>
-      </td>
-    </tr>
-  `).join('');
+  try {
+    const respuesta = await peticionAjax('index.php?modulo=departamento&accion=listar');
+    const filas = respuesta.datos.map((departamento) => `
+      <tr>
+        <td>${departamento.departamento_id}</td>
+        <td>${escaparHtml(departamento.pais)}</td>
+        <td>${escaparHtml(departamento.nombre)}</td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-outline-primary" onclick="editarDepartamento(${departamento.departamento_id})">Editar</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="eliminarDepartamento(${departamento.departamento_id})">Eliminar</button>
+        </td>
+      </tr>
+    `).join('');
 
-  $('#tabla_departamentos').html(filas || '<tr><td colspan="4" class="text-center text-secondary py-4">Sin registros.</td></tr>');
+    document.getElementById('tabla_departamentos').innerHTML = filas
+      || '<tr><td colspan="4" class="text-center text-secondary py-4">Sin registros.</td></tr>';
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
+  }
 }
 
 async function cargarDepartamentosCombo(pais_id, seleccionado = null) {
-  const selector = '#ciudad_departamento_id';
+  const selector = document.getElementById('ciudad_departamento_id');
 
   if (!pais_id) {
-    $(selector).html('<option value="">-- Selecciona primero un país --</option>');
+    selector.innerHTML = '<option value="">-- Selecciona primero un país --</option>';
     return;
   }
 
-  const respuesta = await peticionAjax(`index.php?modulo=departamento&accion=listar&pais_id=${pais_id}`);
+  const respuesta = await peticionAjax(
+    `index.php?modulo=departamento&accion=listar&pais_id=${pais_id}`
+  );
   let opciones = '<option value="">-- Selecciona un departamento --</option>';
 
   respuesta.datos.forEach((departamento) => {
-    const selected = Number(seleccionado) === Number(departamento.departamento_id) ? 'selected' : '';
+    const selected = Number(seleccionado) === Number(departamento.departamento_id)
+      ? 'selected'
+      : '';
+
     opciones += `<option value="${departamento.departamento_id}" ${selected}>${escaparHtml(departamento.nombre)}</option>`;
   });
 
-  $(selector).html(opciones);
+  selector.innerHTML = opciones;
 }
 
 async function abrirModalDepartamento() {
   mostrarSeccion('departamento');
-  $('#titulo_departamento').text('Crear Departamento');
-  $('#departamento_id').val('');
-  $('#departamento_nombre').val('');
-  await cargarPaisesCombo('#departamento_pais_id');
-  $('#departamento_pais_id').trigger('focus');
+  document.getElementById('titulo_departamento').textContent = 'Crear Departamento';
+  document.getElementById('departamento_id').value = '';
+  document.getElementById('departamento_nombre').value = '';
+
+  try {
+    await cargarPaisesCombo('#departamento_pais_id');
+    document.getElementById('departamento_pais_id').focus();
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
+  }
 }
 
 function cancelarFormularioDepartamento() {
-  $('#form_departamento')[0].reset();
-  $('#departamento_id').val('');
-  $('#departamento_pais_id').html('');
-  $('#titulo_departamento').text('Crear Departamento');
+  document.getElementById('form_departamento').reset();
+  document.getElementById('departamento_id').value = '';
+  document.getElementById('departamento_pais_id').innerHTML = '';
+  document.getElementById('titulo_departamento').textContent = 'Crear Departamento';
   mostrarSeccion('pais');
 }
 
 async function editarDepartamento(departamento_id) {
-  const respuesta = await peticionAjax(`index.php?modulo=departamento&accion=obtener&departamento_id=${departamento_id}`);
-  mostrarSeccion('departamento');
-  $('#titulo_departamento').text('Editar Departamento');
-  $('#departamento_id').val(respuesta.datos.departamento_id);
-  $('#departamento_nombre').val(respuesta.datos.nombre);
-  await cargarPaisesCombo('#departamento_pais_id', respuesta.datos.pais_id);
-  $('#departamento_pais_id').trigger('focus');
+  try {
+    const respuesta = await peticionAjax(
+      `index.php?modulo=departamento&accion=obtener&departamento_id=${departamento_id}`
+    );
+
+    mostrarSeccion('departamento');
+    document.getElementById('titulo_departamento').textContent = 'Editar Departamento';
+    document.getElementById('departamento_id').value = respuesta.datos.departamento_id;
+    document.getElementById('departamento_nombre').value = respuesta.datos.nombre;
+
+    await cargarPaisesCombo(
+      '#departamento_pais_id',
+      respuesta.datos.pais_id
+    );
+
+    document.getElementById('departamento_pais_id').focus();
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
+  }
 }
 
 async function guardarDepartamento(evento) {
   evento.preventDefault();
-  const departamento_id = Number($('#departamento_id').val());
+
+  const departamento_id = Number(document.getElementById('departamento_id').value);
   const datos = {
-    pais_id: Number($('#departamento_pais_id').val()),
-    nombre: $('#departamento_nombre').val().trim()
+    pais_id: Number(document.getElementById('departamento_pais_id').value),
+    nombre: document.getElementById('departamento_nombre').value.trim()
   };
   let accion = 'guardar';
 
@@ -217,12 +285,17 @@ async function guardarDepartamento(evento) {
   }
 
   try {
-    const respuesta = await peticionAjax(`index.php?modulo=departamento&accion=${accion}`, 'POST', datos);
+    const respuesta = await peticionAjax(
+      `index.php?modulo=departamento&accion=${accion}`,
+      'POST',
+      datos
+    );
+
     cancelarFormularioDepartamento();
     mostrarAlerta(respuesta.mensaje);
     await cargarTodo();
-  } catch (xhr) {
-    mostrarAlerta(mensajeError(xhr), 'danger');
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
   }
 }
 
@@ -232,68 +305,100 @@ async function eliminarDepartamento(departamento_id) {
   }
 
   try {
-    const respuesta = await peticionAjax('index.php?modulo=departamento&accion=eliminar', 'POST', {departamento_id});
+    const respuesta = await peticionAjax(
+      'index.php?modulo=departamento&accion=eliminar',
+      'POST',
+      {departamento_id}
+    );
+
     mostrarAlerta(respuesta.mensaje);
     await cargarTodo();
-  } catch (xhr) {
-    mostrarAlerta(mensajeError(xhr), 'danger');
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
   }
 }
 
 async function listarCiudades() {
-  const respuesta = await peticionAjax('index.php?modulo=ciudad&accion=listar');
-  const filas = respuesta.datos.map((ciudad) => `
-    <tr>
-      <td>${ciudad.ciudad_id}</td>
-      <td>${escaparHtml(ciudad.pais)}</td>
-      <td>${escaparHtml(ciudad.departamento)}</td>
-      <td>${escaparHtml(ciudad.nombre)}</td>
-      <td class="text-end">
-        <button class="btn btn-sm btn-outline-primary" onclick="editarCiudad(${ciudad.ciudad_id})">Editar</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="eliminarCiudad(${ciudad.ciudad_id})">Eliminar</button>
-      </td>
-    </tr>
-  `).join('');
+  try {
+    const respuesta = await peticionAjax('index.php?modulo=ciudad&accion=listar');
+    const filas = respuesta.datos.map((ciudad) => `
+      <tr>
+        <td>${ciudad.ciudad_id}</td>
+        <td>${escaparHtml(ciudad.pais)}</td>
+        <td>${escaparHtml(ciudad.departamento)}</td>
+        <td>${escaparHtml(ciudad.nombre)}</td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-outline-primary" onclick="editarCiudad(${ciudad.ciudad_id})">Editar</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="eliminarCiudad(${ciudad.ciudad_id})">Eliminar</button>
+        </td>
+      </tr>
+    `).join('');
 
-  $('#tabla_ciudades').html(filas || '<tr><td colspan="5" class="text-center text-secondary py-4">Sin registros.</td></tr>');
+    document.getElementById('tabla_ciudades').innerHTML = filas
+      || '<tr><td colspan="5" class="text-center text-secondary py-4">Sin registros.</td></tr>';
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
+  }
 }
 
 async function abrirModalCiudad() {
   mostrarSeccion('ciudad');
-  $('#titulo_ciudad').text('Crear Ciudad');
-  $('#ciudad_id').val('');
-  $('#ciudad_nombre').val('');
-  await cargarPaisesCombo('#ciudad_pais_id');
-  $('#ciudad_departamento_id').html('<option value="">-- Selecciona primero un país --</option>');
-  $('#ciudad_pais_id').trigger('focus');
+  document.getElementById('titulo_ciudad').textContent = 'Crear Ciudad';
+  document.getElementById('ciudad_id').value = '';
+  document.getElementById('ciudad_nombre').value = '';
+
+  try {
+    await cargarPaisesCombo('#ciudad_pais_id');
+    document.getElementById('ciudad_departamento_id').innerHTML = '<option value="">-- Selecciona primero un país --</option>';
+    document.getElementById('ciudad_pais_id').focus();
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
+  }
 }
 
 function cancelarFormularioCiudad() {
-  $('#form_ciudad')[0].reset();
-  $('#ciudad_id').val('');
-  $('#ciudad_pais_id').html('');
-  $('#ciudad_departamento_id').html('');
-  $('#titulo_ciudad').text('Crear Ciudad');
+  document.getElementById('form_ciudad').reset();
+  document.getElementById('ciudad_id').value = '';
+  document.getElementById('ciudad_pais_id').innerHTML = '';
+  document.getElementById('ciudad_departamento_id').innerHTML = '';
+  document.getElementById('titulo_ciudad').textContent = 'Crear Ciudad';
   mostrarSeccion('pais');
 }
 
 async function editarCiudad(ciudad_id) {
-  const respuesta = await peticionAjax(`index.php?modulo=ciudad&accion=obtener&ciudad_id=${ciudad_id}`);
-  mostrarSeccion('ciudad');
-  $('#titulo_ciudad').text('Editar Ciudad');
-  $('#ciudad_id').val(respuesta.datos.ciudad_id);
-  $('#ciudad_nombre').val(respuesta.datos.nombre);
-  await cargarPaisesCombo('#ciudad_pais_id', respuesta.datos.pais_id);
-  await cargarDepartamentosCombo(respuesta.datos.pais_id, respuesta.datos.departamento_id);
-  $('#ciudad_pais_id').trigger('focus');
+  try {
+    const respuesta = await peticionAjax(
+      `index.php?modulo=ciudad&accion=obtener&ciudad_id=${ciudad_id}`
+    );
+
+    mostrarSeccion('ciudad');
+    document.getElementById('titulo_ciudad').textContent = 'Editar Ciudad';
+    document.getElementById('ciudad_id').value = respuesta.datos.ciudad_id;
+    document.getElementById('ciudad_nombre').value = respuesta.datos.nombre;
+
+    await cargarPaisesCombo(
+      '#ciudad_pais_id',
+      respuesta.datos.pais_id
+    );
+
+    await cargarDepartamentosCombo(
+      respuesta.datos.pais_id,
+      respuesta.datos.departamento_id
+    );
+
+    document.getElementById('ciudad_pais_id').focus();
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
+  }
 }
 
 async function guardarCiudad(evento) {
   evento.preventDefault();
-  const ciudad_id = Number($('#ciudad_id').val());
+
+  const ciudad_id = Number(document.getElementById('ciudad_id').value);
   const datos = {
-    departamento_id: Number($('#ciudad_departamento_id').val()),
-    nombre: $('#ciudad_nombre').val().trim()
+    departamento_id: Number(document.getElementById('ciudad_departamento_id').value),
+    nombre: document.getElementById('ciudad_nombre').value.trim()
   };
   let accion = 'guardar';
 
@@ -303,12 +408,17 @@ async function guardarCiudad(evento) {
   }
 
   try {
-    const respuesta = await peticionAjax(`index.php?modulo=ciudad&accion=${accion}`, 'POST', datos);
+    const respuesta = await peticionAjax(
+      `index.php?modulo=ciudad&accion=${accion}`,
+      'POST',
+      datos
+    );
+
     cancelarFormularioCiudad();
     mostrarAlerta(respuesta.mensaje);
     await cargarTodo();
-  } catch (xhr) {
-    mostrarAlerta(mensajeError(xhr), 'danger');
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
   }
 }
 
@@ -318,10 +428,15 @@ async function eliminarCiudad(ciudad_id) {
   }
 
   try {
-    const respuesta = await peticionAjax('index.php?modulo=ciudad&accion=eliminar', 'POST', {ciudad_id});
+    const respuesta = await peticionAjax(
+      'index.php?modulo=ciudad&accion=eliminar',
+      'POST',
+      {ciudad_id}
+    );
+
     mostrarAlerta(respuesta.mensaje);
     await cargarTodo();
-  } catch (xhr) {
-    mostrarAlerta(mensajeError(xhr), 'danger');
+  } catch (error) {
+    mostrarAlerta(mensajeError(error), 'danger');
   }
 }

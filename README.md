@@ -1,6 +1,6 @@
 # CRUD de ubicaciones
 
-CRUD desarrollado con PHP puro, PDO, MySQL/MariaDB, Bootstrap 5, jQuery y AJAX.
+CRUD desarrollado con PHP puro, POO, MVC, PDO, MySQL/MariaDB, Bootstrap 5 y AJAX con Fetch API, sin jQuery.
 
 ## Requisitos
 
